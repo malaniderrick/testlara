@@ -1,0 +1,49 @@
+Step 1 
+
+Backup Data: Before initiating any migration, make sure both the old and new Laravel applications are backed up. This includes database backups and any other important data or key, repo.  
+Review and Identify Subscription Model: Ensure that the subscription model is properly defined in both the old and new Laravel applications. Check for any differences in the database schema (tables like users, subscriptions etc.)  
+Check for Integration: Confirm that the new Laravel application is already integrated with Stripe or Authorize.net. (composer.json) Ensure the same subscription logic is in place, including the subscription plans, payment gateway integration, and webhooks.
+
+Step 2
+
+Exporting Subscription Data , Access Subscription Data on the Old Site:
+Retrieve the subscription data from the old site’s database. Focus on these essential fields:
+make sure users info is correctly exported. 
+plan master table check with id. 
+Payment status (enum type)
+Subscription ID
+User ID (linked to the customer)
+Plan ID (plan details like price, type, etc.)
+Payment status (active, canceled, etc.)
+Payment Gateway Details (Stripe/Authorize)
+Subscription start/end date
+
+$subscriptions = DB::table('subscriptions')->get();  or we can fetch using model instead of static method use. 
+
+Step 3 
+Export Subscription Data: Export the data to a CSV or JSON file, which will be used to import into the new site. Use an export tool or manually write a query to get the data. or using directly from DB also we can expor Db dbeaver or mysql.
+code in we can do something like this 
+$subscriptions->each(function ($subscription) { $data[] = $subscription; }); file_put_contents('subscriptions.json', json_encode($data));
+Data Transfer  -> Secure Transfer of Subscription Data:
+Move the exported data to the new server. 
+Check the Subscription Data Format:
+Confirm that the data format (JSON) is correctly formatted and the necessary fields are present before moving on to the next step.
+
+
+start Importing Subscription Data into the New Site
+
+Import Data in the New Site: Using Laravel’s artisan commands or a custom script, import the subscription data into the new site’s database. php artisan migrate:import --file=subcriptions.json
+
+Verify Data in the New System:
+Test if the subscription data has been migrated successfully. Check the following:
+The correct user is linked to the subscription.
+The subscription plan is assigned correctly.
+self testing  Testing Payment Processing:
+Run test transactions to ensure that payment processing (e.g., Stripe payments) works smoothly. Make sure new subscriptions can be created, and existing ones can be managed. 
+
+make sure update .env file with new url so webhook time calling proper new portal webhook called Update Subscription Webhooks  
+
+Ensure that webhook URLs in Stripe or Authorize.net are updated to reflect the new site. This ensures that payments, cancellations, and updates are correctly communicated to the new system   
+\Stripe\Webhook::constructEvent($payload, $sig_header, $endpoint_secret);
+
+Test Webhooks: Trigger a test webhook from Stripe/Authorize.net to ensure the new Laravel site correctly handles the subscription-related events (e.g., payment succeeded, subscription canceled).
